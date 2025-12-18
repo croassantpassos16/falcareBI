@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard Executivo de Inteligência Comercial - FALCARE Engenharia">
+    <title>FALCARE BI | Platinum Dashboard v10.5</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* DESIGN SYSTEM */
+        :root {
+            --color-primary: #600000;   /* Burgundy */
+            --color-accent: #d4af37;    /* Gold */
+            --color-slate-900: #0f172a;
+            --color-slate-600: #475569;
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            
+            --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--color-bg); 
+            color: var(--color-slate-900); 
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* COMPONENTES */
+        .glass-nav { 
+            background: rgba(255, 255, 255, 0.98); 
+            backdrop-filter: blur(12px); 
+            border-bottom: 2px solid var(--color-accent);
+            transition: var(--transition-smooth);
+        }
+
+        /* KPI Cards */
+        .kpi-card { 
+            background: var(--color-surface);
+            border-radius: 0.75rem;
+            border-top: 5px solid var(--color-primary); 
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+        }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+
+        /* Analysis Cards */
+        .analysis-card {
+            background: var(--color-surface);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition-smooth);
+        }
+        .analysis-card:hover { 
+            border-color: var(--color-accent); 
+            transform: scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+        .analysis-card h4 {
+            font-weight: 900;
+            color: var(--color-primary);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--color-accent);
+            padding-left: 1rem;
+        }
+
+        /* VIP Sections */
+        .vip-container { 
+            background: var(--color-surface); 
+            border-left: 10px solid var(--color-primary); 
+            box-shadow: var(--shadow-sm);
+            border-radius: 0.5rem;
+            transition: var(--transition-smooth);
+        }
+        .vip-container:hover { box-shadow: var(--shadow-lg); }
+
+        /* Big Deals Items */
+        .deal-item { 
+            background: var(--color-surface); 
+            border-left: 6px solid var(--color-primary); 
+            padding: 1.2rem; 
+            border-radius: 0.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: 0.3s; 
+        }
+        .deal-item:hover { 
+            border-left-width: 12px; 
+            border-left-color: var(--color-accent);
+            transform: translateX(5px);
+        }
+
+        /* Modal Engine */
+        .modal-bg { 
+            position: fixed; inset: 0; 
+            background: rgba(15, 23, 42, 0.95); 
+            z-index: 100; 
+            display: flex; align-items: center; justify-content: center; 
+            padding: 2rem; 
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-bg.active { opacity: 1; pointer-events: all; }
+        
+        .modal-container { 
+            background: var(--color-surface); 
+            width: 100%; max-width: 1200px; 
+            padding: 3rem; 
+            border-radius: 1rem;
+            transform: translateY(20px); transition: transform 0.3s ease;
+            border-top: 10px solid var(--color-primary);
+        }
+        .modal-bg.active .modal-container { transform: translateY(0); }
+
+        /* Utilities */
+        .text-gold { color: var(--color-accent); }
+        .text-burgundy { color: var(--color-primary); }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <nav class="glass-nav flex justify-between items-center px-8 lg:px-12 py-4 sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <img src="src/logo.png" alt="FALCARE Logo" class="h-10 w-auto object-contain">
+            <div class="h-8 w-px bg-slate-300 hidden md:block"></div>
+            <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tighter italic hidden md:block">
+                Falcare <span class="text-gold font-light not-italic text-sm">BI Platinum</span>
+            </h1>
+        </div>
+        <div class="hidden lg:flex space-x-10 font-bold text-xs uppercase tracking-widest text-slate-500">
+            <a href="#stats" class="hover:text-burgundy transition-colors py-2">Performance</a>
+            <a href="#bi" class="hover:text-burgundy transition-colors py-2">Analytics</a>
+            <a href="#vip" class="hover:text-burgundy transition-colors py-2">Key Accounts</a>
+            <a href="#deals" class="hover:text-burgundy transition-colors py-2">Big Deals</a>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-[10px] font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full border border-slate-200">CONFIDENCIAL</span>
+        </div>
+    </nav>
+
+    <section id="stats" class="bg-white pt-16 pb-24 px-6 lg:px-12 border-b-8 border-gold">
+        <div class="max-w-7xl mx-auto text-center" data-aos="fade-up">
+            <div class="inline-block mb-8 p-4 bg-slate-50 rounded-full">
+                <img src="src/logo.png" alt="FALCARE" class="h-20 w-auto opacity-90 mix-blend-multiply">
+            </div>
+            <h2 class="text-sm font-black text-gold tracking-[0.5em] mb-4 uppercase">Visão Consolidada 2025</h2>
+            <h3 class="text-5xl lg:text-7xl font-black text-slate-900 mb-16 tracking-tighter">Performance Industrial</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
+                <div class="kpi-card p-8 bg-slate-50">
+                    <div class="text-5xl font-black text-slate-900 mb-2">37</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pedidos Confirmados</div>
+                </div>
+                <div class="kpi-card p-8 bg-slate-50">
+                    <div class="text-4xl font-black text-slate-900 mb-2">R$ 41.7M</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Receita Realizada</div>
+                </div>
+                <div class="kpi-card p-8 bg-slate-50">
+                    <div class="text-5xl font-black text-burgundy mb-2">14.2%</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taxa de Conversão</div>
+                </div>
+                <div class="kpi-card p-8 bg-slate-50">
+                    <div class="text-4xl font-black text-slate-900 mb-2">R$ 1.83B</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pipeline em Análise</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="bi" class="py-32 px-6 lg:px-12 bg-slate-50">
+        <div class="max-w-7xl mx-auto mb-16 flex items-end justify-between border-b border-slate-200 pb-6">
+            <div>
+                <h2 class="text-4xl font-black text-slate-900 uppercase tracking-tight">Analytics 360º</h2>
+                <p class="text-slate-500 mt-2">Clique nos gráficos para detalhamento.</p>
+            </div>
+            <div class="text-gold font-bold text-xl hidden md:block">/// 06 ANÁLISES</div>
+        </div>
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div id="grid-analytics" class="contents"></div>
+        </div>
+    </section>
+
+    <section id="vip" class="py-32 px-6 lg:px-12 bg-white">
+        <div class="max-w-7xl mx-auto space-y-24">
+            <h2 class="text-4xl font-black text-burgundy border-l-[12px] border-gold pl-8 uppercase italic">Key Account Management</h2>
+
+            <div class="vip-container p-10 lg:p-16" data-aos="fade-right">
+                <div class="flex justify-between items-start mb-12">
+                    <h3 class="text-5xl font-black text-slate-900 tracking-tighter">GENERAL MOTORS</h3>
+                    <span class="text-xs font-bold bg-burgundy text-white px-3 py-1 rounded">TIER 1 CLIENT</span>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                    <div class="h-[400px]">
+                        <h5 class="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">Mix de Escopo (Qtd)</h5>
+                        <canvas id="gm_scope"></canvas>
+                    </div>
+                    <div class="h-[400px]">
+                        <h5 class="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">Status dos Projetos (Qtd)</h5>
+                        <canvas id="gm_status"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="vip-container p-10 !border-slate-500" data-aos="fade-up">
+                    <h3 class="text-3xl font-black text-slate-700 mb-8">VOLKSWAGEN</h3>
+                    <div class="space-y-10">
+                        <div class="h-[250px]"><canvas id="vw_scope"></canvas></div>
+                        <div class="h-[250px]"><canvas id="vw_status"></canvas></div>
+                    </div>
+                </div>
+                <div class="vip-container p-10 !border-blue-900" data-aos="fade-up" data-aos-delay="100">
+                    <h3 class="text-3xl font-black text-slate-700 mb-8">STELLANTIS</h3>
+                    <div class="space-y-10">
+                        <div class="h-[250px]"><canvas id="st_scope"></canvas></div>
+                        <div class="h-[250px]"><canvas id="st_status"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="deals" class="py-32 px-6 lg:px-12 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
+            <div>
+                <h3 class="text-2xl font-black text-green-400 mb-12 border-b border-green-900 pb-4 flex items-center gap-4">
+                    <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                    PEDIDOS REALIZADOS
+                </h3>
+                <div class="grid gap-4">
+                    <div class="deal-item">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>TOYOTA</span><span>FECHADO</span></div>
+                        <h5 class="text-xl font-black text-slate-800">R$ 16.363.240</h5>
+                        <p class="text-[10px] text-slate-500">Mtg. Transportadores Pintura Miracle</p>
+                    </div>
+                    <div class="deal-item">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>GMB - SJC</span><span>FECHADO</span></div>
+                        <h5 class="text-xl font-black text-slate-800">R$ 9.990.000</h5>
+                        <p class="text-[10px] text-slate-500">Cabine Hospital e Conveyor</p>
+                    </div>
+                    <div class="deal-item">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>GM SJC 314</span><span>FECHADO</span></div>
+                        <h5 class="text-xl font-black text-slate-800">R$ 2.499.911</h5>
+                        <p class="text-[10px] text-slate-500">Trade up Chassis Line</p>
+                    </div>
+                    <div class="deal-item">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>CNH CONTAGEM</span><span>FECHADO</span></div>
+                        <h5 class="text-xl font-black text-slate-800">R$ 1.696.000</h5>
+                        <p class="text-[10px] text-slate-500">Adequação Power & Free</p>
+                    </div>
+                    <div class="deal-item">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>VWB TBT</span><span>FECHADO</span></div>
+                        <h5 class="text-xl font-black text-slate-800">R$ 1.588.500</h5>
+                        <p class="text-[10px] text-slate-500">Retrofit de Corrente Webb</p>
+                    </div>
+                    <div class="deal-item">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>RENAULT</span><span>FECHADO</span></div>
+                        <h5 class="text-xl font-black text-slate-800">R$ 1.200.000</h5>
+                        <p class="text-[10px] text-slate-500">Expansão Curitiba (Small)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-2xl font-black text-gold mb-12 border-b border-yellow-900 pb-4 flex items-center gap-4">
+                    <span class="w-3 h-3 bg-gold rounded-full"></span>
+                    PIPELINE ESTRATÉGICO
+                </h3>
+                <div class="grid gap-4">
+                    <div class="deal-item !border-gold !bg-slate-800">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>DAF 23</span><span>ANÁLISE</span></div>
+                        <h5 class="text-xl font-black text-white">R$ 187.750.000</h5>
+                        <p class="text-[10px] text-slate-400">New Paint Shop - Planta Principal</p>
+                    </div>
+                    <div class="deal-item !border-gold !bg-slate-800">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>GMB - SJC 350</span><span>NEGOCIAÇÃO</span></div>
+                        <h5 class="text-xl font-black text-white">R$ 159.500.000</h5>
+                        <p class="text-[10px] text-slate-400">RFI Pintura Low Cost (Transportadores)</p>
+                    </div>
+                    <div class="deal-item !border-gold !bg-slate-800">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>VWB - SBC 419</span><span>ANÁLISE</span></div>
+                        <h5 class="text-xl font-black text-white">R$ 94.800.000</h5>
+                        <p class="text-[10px] text-slate-400">Novas esteiras BA ZP6 ZP7</p>
+                    </div>
+                    <div class="deal-item !border-gold !bg-slate-800">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>JEEP 47</span><span>ANÁLISE</span></div>
+                        <h5 class="text-xl font-black text-white">R$ 89.095.000</h5>
+                        <p class="text-[10px] text-slate-400">Retooling GAPE</p>
+                    </div>
+                    <div class="deal-item !border-gold !bg-slate-800">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>GMB - SJC 352</span><span>ANÁLISE</span></div>
+                        <h5 class="text-xl font-black text-white">R$ 74.534.327</h5>
+                        <p class="text-[10px] text-slate-400">Reforma Pintura Peças P&A</p>
+                    </div>
+                    <div class="deal-item !border-gold !bg-slate-800">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase"><span>SCANIA</span><span>NEGOCIAÇÃO</span></div>
+                        <h5 class="text-xl font-black text-white">R$ 62.100.000</h5>
+                        <p class="text-[10px] text-slate-400">Linha de Montagem de Motores</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="modal-overlay" class="modal-bg">
+        <div class="modal-container">
+            <button id="modal-close" class="absolute top-8 right-8 text-4xl text-slate-300 hover:text-burgundy transition">&times;</button>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="h-[500px] w-full relative"><canvas id="modalChart"></canvas></div>
+                <div>
+                    <h3 id="mTitle" class="text-4xl font-black text-slate-900 border-l-[10px] border-gold pl-6 mb-10 uppercase italic tracking-tighter">Relatório</h3>
+                    <div id="mTable" class="bg-slate-50 p-8 rounded-lg border border-slate-200"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA MODULE ---
+        const DashboardData = {
+            main: [
+                { id: 'c1', title: "Volume 24/25", labels: ['2024', '2025'], values: [257, 260], type: 'pie', colors: ['#6D214F', '#B33771'] },
+                { id: 'c2', title: "Market Share", labels: ['Outros', 'GM', 'VWB', 'Stellantis'], values: [136, 69, 40, 15], type: 'doughnut', colors: ['#e2e8f0', '#800000', '#a6894a', '#1e293b'] },
+                { id: 'c3', title: "Funil de Status", labels: ['Análise', 'Pedido', 'Perdido', 'Negoc.'], values: [175, 37, 33, 15], type: 'pie', colors: ['#f39c12', '#27ae60', '#c0392b', '#f1c40f'] },
+                { id: 'c4', title: "Mix de Escopo", labels: ['Transp.', 'Peças', 'Equip.'], values: [135, 104, 21], type: 'pie', colors: ['#800000', '#a6894a', '#1e293b'] },
+                { id: 'c5', title: "Pipeline Financeiro (R$M)", labels: ['Análise', 'Perd.', 'Negoc.', 'Ped.'], values: [1463, 291, 45, 41], type: 'bar', colors: ['#f39c12', '#c0392b', '#f1c40f', '#27ae60'], isMoney: true },
+                { id: 'c6', title: "Automação", labels: ['Mecânica', 'Eletromec.'], values: [158, 102], type: 'pie', colors: ['#cbd5e1', '#a6894a'] }
+            ],
+            kam: [
+                // MULTICOLOR CHARTS UPDATE
+                { id: 'gm_scope', labels: ['Transp.', 'Peças', 'Equip.'], values: [35, 26, 8], colors: ['#800000', '#b8860b', '#1e293b'] },
+                { id: 'gm_status', labels: ['Análise', 'Pedido', 'Perdido'], values: [57, 10, 2], colors: ['#94a3b8', '#15803d', '#991b1b'] },
+                
+                { id: 'vw_scope', labels: ['Transp.', 'Peças', 'Equip.'], values: [30, 8, 2], colors: ['#1e293b', '#b8860b', '#64748b'] },
+                { id: 'vw_status', labels: ['Análise', 'Perdido', 'Pedido'], values: [20, 14, 5], colors: ['#94a3b8', '#991b1b', '#15803d'] },
+                
+                { id: 'st_scope', labels: ['Transp.', 'Equip.'], values: [14, 1], colors: ['#0f172a', '#b8860b'] },
+                { id: 'st_status', labels: ['Perdido', 'Negoc.', 'Análise', 'Pedido'], values: [7, 4, 3, 1], colors: ['#991b1b', '#f59e0b', '#94a3b8', '#15803d'] }
+            ]
+        };
+
+        // --- 2. FACTORY ---
+        const ChartFactory = {
+            defaults: () => { Chart.defaults.font.family = "'Inter', sans-serif"; Chart.defaults.color = '#334155'; },
+            getOptions: (isMoney = false, vertical = false) => ({
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' }, padding: 15, usePointStyle: true } },
+                    datalabels: {
+                        color: (ctx) => {
+                            const val = ctx.dataset.data[ctx.dataIndex];
+                            // Lógica inteligente para cor do texto: branco se fundo escuro, preto se claro
+                            return val > 0 ? '#fff' : 'transparent'; 
+                        },
+                        font: { weight: '800', size: 12 },
+                        formatter: (val, ctx) => {
+                            const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = (val * 100 / sum).toFixed(0) + "%";
+                            return isMoney ? `R$${val}M` : `${val} (${pct})`;
+                        },
+                        // Sombras de texto para leitura em qualquer cor
+                        textShadowBlur: 4, textShadowColor: 'rgba(0,0,0,0.5)',
+                        anchor: vertical ? 'end' : 'center', align: vertical ? 'top' : 'center', offset: vertical ? 4 : 0,
+                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0
+                    }
+                },
+                scales: vertical ? { y: { display: false }, x: { grid: { display: false } } } : {}
+            }),
+            create: (id, config, opts) => {
+                const ctx = document.getElementById(id);
+                if(!ctx) return;
+                return new Chart(ctx, {
+                    type: config.type || 'pie',
+                    data: { labels: config.labels, datasets: [{ data: config.values, backgroundColor: config.colors, borderWidth: 1, borderColor: '#fff' }] },
+                    options: opts
+                });
+            }
+        };
+
+        // --- 3. APP LOGIC ---
+        const App = {
+            activeModalChart: null,
+            init() {
+                AOS.init({ duration: 1000, once: true });
+                Chart.register(ChartDataLabels);
+                ChartFactory.defaults();
+                this.renderGrid();
+                this.renderCharts();
+                this.setupEvents();
+            },
+            renderGrid() {
+                const container = document.getElementById('grid-analytics');
+                DashboardData.main.forEach((d, idx) => {
+                    const html = `
+                        <div class="analysis-card" data-index="${idx}" data-aos="fade-up" data-aos-delay="${idx * 100}">
+                            <h4>${d.title}</h4>
+                            <div class="flex-grow relative min-h-[300px]"><canvas id="${d.id}"></canvas></div>
+                        </div>`;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+            },
+            renderCharts() {
+                DashboardData.main.forEach(d => ChartFactory.create(d.id, d, ChartFactory.getOptions(d.isMoney, d.type === 'bar')));
+                DashboardData.kam.forEach(d => ChartFactory.create(d.id, d, ChartFactory.getOptions(false)));
+            },
+            openModal(idx) {
+                const d = DashboardData.main[idx];
+                const modal = document.getElementById('modal-overlay');
+                modal.classList.add('active');
+                document.getElementById('mTitle').innerText = d.title;
+                
+                let tableHTML = `<table class="w-full text-left border-collapse">`;
+                d.labels.forEach((l, i) => {
+                    const val = d.isMoney ? `R$ ${d.values[i]}M` : d.values[i];
+                    tableHTML += `<tr class="border-b border-slate-200"><td class="py-4 font-bold text-slate-500 text-xs tracking-wider uppercase">${l}</td><td class="text-right font-black text-slate-900 text-2xl">${val}</td></tr>`;
+                });
+                document.getElementById('mTable').innerHTML = tableHTML + `</table>`;
+
+                if (this.activeModalChart) this.activeModalChart.destroy();
+                this.activeModalChart = ChartFactory.create('modalChart', d, ChartFactory.getOptions(d.isMoney, d.type === 'bar'));
+            },
+            closeModal() { document.getElementById('modal-overlay').classList.remove('active'); },
+            setupEvents() {
+                document.getElementById('grid-analytics').addEventListener('click', (e) => {
+                    const card = e.target.closest('.analysis-card');
+                    if (card) this.openModal(card.dataset.index);
+                });
+                document.getElementById('modal-close').addEventListener('click', () => this.closeModal());
+                window.addEventListener('keydown', (e) => { if (e.key === "Escape") this.closeModal(); });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
